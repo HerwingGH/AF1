@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Administración</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1, h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        .section { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #f4f4f4; }
+        button { padding: 8px 15px; background-color: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #c0392b; }
+        form { margin-top: 10px; }
+        input, select { padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .add-button { background-color: #3498db; }
+        .add-button:hover { background-color: #2980b9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Panel de Administración</h1>
+        <p><a href="{{ url_for('index') }}">Volver al Inicio</a></p>
+
+        <div class="section">
+            <h2>Alertas</h2>
+            <table>
+                <tr><th>ID</th><th>Descripción</th><th>Categoría</th><th>Usuario ID</th><th>Acción</th></tr>
+                {% for alert in alerts %}
+                <tr>
+                    <td>{{ alert.id }}</td>
+                    <td>{{ alert.description }}</td>
+                    <td>
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="action" value="update_alert_category">
+                            <input type="hidden" name="alert_id" value="{{ alert.id }}">
+                            <select name="category_id">
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if category.id == alert.category_id %}selected{% endif %}>{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit">Actualizar</button>
+                        </form>
+                    </td>
+                    <td>{{ alert.user_id }}</td>
+                    <td>
+                        {% if current_user.can_delete %}
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="action" value="delete_alert">
+                            <input type="hidden" name="alert_id" value="{{ alert.id }}">
+                            <button type="submit">Eliminar</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Usuarios</h2>
+            <table>
+                <tr><th>ID</th><th>Usuario</th><th>Admin</th><th>Permiso Eliminar</th><th>Acción</th></tr>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ 'Sí' if user.is_admin else 'No' }}</td>
+                    <td>
+                        {% if current_user.username == 'admin' and user.username != 'admin' %}
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="action" value="toggle_delete_permission">
+                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                            <input type="checkbox" name="can_delete" {% if user.can_delete %}checked{% endif %} onchange="this.form.submit()">
+                        </form>
+                        {% else %}
+                        {{ 'Sí' if user.can_delete else 'No' }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if current_user.username == 'admin' and user.username != 'admin' %}
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="action" value="delete_user">
+                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                            <button type="submit">Eliminar</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Categorías</h2>
+            <form method="POST">
+                <input type="hidden" name="action" value="add_category">
+                <input type="text" name="category_name" placeholder="Nueva categoría" required>
+                <button type="submit" class="add-button">Añadir</button>
+            </form>
+            <table>
+                <tr><th>ID</th><th>Nombre</th><th>Acción</th></tr>
+                {% for category in categories %}
+                <tr>
+                    <td>{{ category.id }}</td>
+                    <td>{{ category.name }}</td>
+                    <td>
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="action" value="delete_category">
+                            <input type="hidden" name="category_id" value="{{ category.id }}">
+                            <button type="submit">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</body>
+</html>
